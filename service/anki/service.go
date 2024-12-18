@@ -43,28 +43,24 @@ func (s *Service) BeginTransaction(ctx context.Context) (*repository.Queries, *s
 func (s *Service) CreateAnki(payload *types.CreateAnkiPayload) (string, int, error) {
 	logger.Info("Processando o arquivo do payload")
 
-	// Criar um arquivo temporário
 	tempFile, err := os.CreateTemp("", "uploaded_*.pdf")
 	if err != nil {
 		return "", http.StatusInternalServerError, fmt.Errorf("erro ao criar arquivo temporário: %w", err)
 	}
-	defer os.Remove(tempFile.Name()) // Remove o arquivo temporário após uso
+	defer os.Remove(tempFile.Name())
 	defer tempFile.Close()
 
-	// Copiar o conteúdo do payload para o arquivo temporário
 	_, err = io.Copy(tempFile, payload.File)
 	if err != nil {
 		return "", http.StatusInternalServerError, fmt.Errorf("erro ao copiar conteúdo do arquivo: %w", err)
 	}
 
-	// Abrir o arquivo temporário
 	file, err := os.Open(tempFile.Name())
 	if err != nil {
 		return "", http.StatusInternalServerError, fmt.Errorf("erro ao abrir arquivo temporário: %w", err)
 	}
 	defer file.Close()
 
-	// Ler e processar o conteúdo do PDF
 	text, err := extractTextFromPDF(file)
 	if err != nil {
 		return "", http.StatusInternalServerError, fmt.Errorf("erro ao extrair texto do PDF: %w", err)
