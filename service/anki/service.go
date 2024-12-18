@@ -1,6 +1,7 @@
 package anki
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -10,8 +11,8 @@ import (
 
 	"github.com/MatthewAraujo/anki_ia/repository"
 	"github.com/MatthewAraujo/anki_ia/types"
-	"github.com/unidoc/unipdf/v3/extractor"
-	"github.com/unidoc/unipdf/v3/model"
+
+	"github.com/ledongthuc/pdf"
 )
 
 type Service struct {
@@ -42,28 +43,51 @@ func (s *Service) BeginTransaction(ctx context.Context) (*repository.Queries, *s
 func (s *Service) CreateAnki(payload *types.CreateAnkiPayload) (string, int, error) {
 	logger.Info("Processando o arquivo do payload")
 
+	// Criar um arquivo temporário
 	tempFile, err := os.CreateTemp("", "uploaded_*.pdf")
 	if err != nil {
 		return "", http.StatusInternalServerError, fmt.Errorf("erro ao criar arquivo temporário: %w", err)
 	}
+	defer os.Remove(tempFile.Name()) // Remove o arquivo temporário após uso
 	defer tempFile.Close()
 
+	// Copiar o conteúdo do payload para o arquivo temporário
 	_, err = io.Copy(tempFile, payload.File)
 	if err != nil {
 		return "", http.StatusInternalServerError, fmt.Errorf("erro ao copiar conteúdo do arquivo: %w", err)
 	}
 
+	// Abrir o arquivo temporário
 	file, err := os.Open(tempFile.Name())
 	if err != nil {
-		return "", http.StatusInternalServerError, fmt.Errorf("erro ao abrir conteúdo do arquivo: %w", err)
+		return "", http.StatusInternalServerError, fmt.Errorf("erro ao abrir arquivo temporário: %w", err)
 	}
+	defer file.Close()
 
-	pdfReader, err := model.NewPdfReader(file)
+	// Ler e processar o conteúdo do PDF
+	text, err := extractTextFromPDF(file)
 	if err != nil {
-		return "", http.StatusInternalServerError, fmt.Errorf("erro ao abrir conteúdo do arquivo: %w", err)
+		return "", http.StatusInternalServerError, fmt.Errorf("erro ao extrair texto do PDF: %w", err)
 	}
 
-	texExtractor, err := extractor.New(pdfReader)
+	return text, http.StatusCreated, nil
+}
 
-	return texExtractor, http.StatusCreated, nil
+func extractTextFromPDF(file *os.File) (string, error) {
+	size, err := file.Stat()
+	reader, err := pdf.NewReader(file, size.Size())
+	if err != nil {
+		return "", fmt.Errorf("erro ao criar reader para o PDF: %w", err)
+	}
+
+	var buf bytes.Buffer
+	for pageIndex := 1; pageIndex <= reader.NumPage(); pageIndex++ {
+		page := reader.Page(pageIndex)
+		if page.V.IsNull() {
+			continue
+		}
+		text, _ := page.GetPlainText(nil)
+		buf.WriteString(text)
+	}
+	return buf.String(), nil
 }
