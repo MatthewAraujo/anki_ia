@@ -13,6 +13,9 @@ import (
 	"github.com/MatthewAraujo/anki_ia/pkg/assert"
 	"github.com/MatthewAraujo/anki_ia/repository"
 	"github.com/MatthewAraujo/anki_ia/utils"
+
+	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -40,9 +43,14 @@ func main() {
 	assert.NoError(err, "Redis is offline")
 	logger.Info("Connect to redis")
 
+	openAIClient := openai.NewClient(
+		option.WithAPIKey(configs.Envs.OpenAi.API_KEY),
+	)
+
+	// model := openai.F(openai.ChatModelGPT4o)
 	repository := repository.New(db)
 
-	server := api.NewAPIServer(fmt.Sprintf(":%s", configs.Envs.API.Port), repository, db, redis)
+	server := api.NewAPIServer(fmt.Sprintf(":%s", configs.Envs.API.Port), repository, db, redis, openAIClient)
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
 	}

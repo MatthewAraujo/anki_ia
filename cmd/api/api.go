@@ -9,22 +9,25 @@ import (
 	"github.com/MatthewAraujo/anki_ia/service/anki"
 	"github.com/MatthewAraujo/anki_ia/service/users"
 	"github.com/gorilla/mux"
+	"github.com/openai/openai-go"
 	"github.com/redis/go-redis/v9"
 )
 
 type APIServer struct {
-	addr  string
-	db    *repository.Queries
-	dbTx  *sql.DB
-	redis *redis.Client
+	addr         string
+	db           *repository.Queries
+	dbTx         *sql.DB
+	redis        *redis.Client
+	openAiClient *openai.Client
 }
 
-func NewAPIServer(addr string, db *repository.Queries, dbTx *sql.DB, redis *redis.Client) *APIServer {
+func NewAPIServer(addr string, db *repository.Queries, dbTx *sql.DB, redis *redis.Client, openAiClient *openai.Client) *APIServer {
 	return &APIServer{
-		addr:  addr,
-		db:    db,
-		dbTx:  dbTx,
-		redis: redis,
+		addr:         addr,
+		db:           db,
+		dbTx:         dbTx,
+		redis:        redis,
+		openAiClient: openAiClient,
 	}
 }
 
@@ -36,7 +39,7 @@ func (s *APIServer) Run() error {
 	customersHandler := users.NewHandler(costumersService)
 	customersHandler.RegisterRoutes(subrouter.PathPrefix("/customers").Subrouter())
 
-	ankiService := anki.NewService(s.db, s.dbTx)
+	ankiService := anki.NewService(s.db, s.dbTx, s.openAiClient)
 	ankiHandler := anki.NewHandler(ankiService)
 	ankiHandler.RegisterRoutes(subrouter.PathPrefix("/anki").Subrouter())
 

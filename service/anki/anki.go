@@ -54,7 +54,7 @@ func (h *Handler) CreateAnki(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, status, map[string]string{"response": questions})
+	utils.WriteJSON(w, status, questions)
 }
 
 func FileUploadHandler(r *http.Request) (multipart.File, string, error) {
