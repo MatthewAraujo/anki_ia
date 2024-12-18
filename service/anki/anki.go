@@ -5,6 +5,8 @@ import (
 	"mime/multipart"
 	"net/http"
 
+	"github.com/MatthewAraujo/anki_ia/repository"
+	"github.com/MatthewAraujo/anki_ia/service/auth"
 	"github.com/MatthewAraujo/anki_ia/types"
 	"github.com/MatthewAraujo/anki_ia/utils"
 	"github.com/gorilla/mux"
@@ -14,16 +16,18 @@ var logger = utils.NewParentLogger("Rota api/v1/anki")
 
 type Handler struct {
 	Service types.AnkiService
+	store   repository.Queries
 }
 
-func NewHandler(Service types.AnkiService) *Handler {
+func NewHandler(Service types.AnkiService, store repository.Queries) *Handler {
 	return &Handler{
 		Service: Service,
+		store:   store,
 	}
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/", h.CreateAnki).Methods(http.MethodPost)
+	router.HandleFunc("/", auth.WithJWTAuth(h.CreateAnki, h.store)).Methods(http.MethodPost)
 }
 
 func (h *Handler) CreateAnki(w http.ResponseWriter, r *http.Request) {

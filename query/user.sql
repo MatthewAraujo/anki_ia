@@ -1,17 +1,17 @@
--- name: FinAllCustomers :many
+-- name: FinAllUsers :many
 select * from user;
 
--- name: InsertCustomers :one
-INSERT INTO customers (name, email, password, role)
-VALUES ($1, $2, $3, $4)
+-- name: InsertUsers :one
+INSERT INTO users (name, email, password)
+VALUES ($1, $2, $3)
 RETURNING *;
 
--- name: FindCustomerByID :one
-SELECT * FROM customers
+-- name: FindUserByID :one
+SELECT * FROM users
 WHERE id = $1;
 
--- name: FindCustomerByEmail :one
+-- name: FindUserByEmail :one
 SELECT * 
-FROM customers
+FROM users
 WHERE email = $1
 LIMIT 1;

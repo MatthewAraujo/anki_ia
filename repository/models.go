@@ -6,83 +6,35 @@ package repository
 
 import (
 	"database/sql"
-	"database/sql/driver"
-	"fmt"
 )
 
-type UserRole string
-
-const (
-	UserRoleAdmin UserRole = "admin"
-	UserRoleUser  UserRole = "user"
-)
-
-func (e *UserRole) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = UserRole(s)
-	case string:
-		*e = UserRole(s)
-	default:
-		return fmt.Errorf("unsupported scan type for UserRole: %T", src)
-	}
-	return nil
+type Option struct {
+	ID         int32  `json:"id"`
+	QuestionID int32  `json:"question_id"`
+	OptionKey  string `json:"option_key"`
+	OptionText string `json:"option_text"`
+	IsCorrect  bool   `json:"is_correct"`
 }
 
-type NullUserRole struct {
-	UserRole UserRole `json:"user_role"`
-	Valid    bool     `json:"valid"` // Valid is true if UserRole is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullUserRole) Scan(value interface{}) error {
-	if value == nil {
-		ns.UserRole, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.UserRole.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullUserRole) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.UserRole), nil
-}
-
-type Customer struct {
-	ID       int32    `json:"id"`
-	Name     string   `json:"name"`
-	Email    string   `json:"email"`
-	Password string   `json:"password"`
-	Role     UserRole `json:"role"`
-}
-
-type Order struct {
-	ID         int32        `json:"id"`
-	CustomerID int32        `json:"customer_id"`
-	OrderDate  sql.NullTime `json:"order_date"`
-	Status     string       `json:"status"`
-}
-
-type OrderItem struct {
-	ID        int32 `json:"id"`
-	OrderID   int32 `json:"order_id"`
-	ProductID int32 `json:"product_id"`
-	Quantity  int32 `json:"quantity"`
-}
-
-type Product struct {
+type Pdf struct {
 	ID          int32          `json:"id"`
-	Name        string         `json:"name"`
-	Description sql.NullString `json:"description"`
-	Price       string         `json:"price"`
+	UserID      int32          `json:"user_id"`
+	Filename    string         `json:"filename"`
+	UploadedAt  sql.NullTime   `json:"uploaded_at"`
+	Status      sql.NullString `json:"status"`
+	TextContent sql.NullString `json:"text_content"`
 }
 
-type Stock struct {
-	ID                int32 `json:"id"`
-	ProductID         int32 `json:"product_id"`
-	AvailableQuantity int32 `json:"available_quantity"`
+type Question struct {
+	ID           int32  `json:"id"`
+	PdfID        int32  `json:"pdf_id"`
+	QuestionText string `json:"question_text"`
+}
+
+type User struct {
+	ID        int32        `json:"id"`
+	Name      string       `json:"name"`
+	Email     string       `json:"email"`
+	Password  string       `json:"password"`
+	CreatedAt sql.NullTime `json:"created_at"`
 }

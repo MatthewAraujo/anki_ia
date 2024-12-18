@@ -40,9 +40,9 @@ func (s *Service) BeginTransaction(ctx context.Context) (*repository.Queries, *s
 	return s.db.WithTx(tx), tx, nil
 }
 
-func (s *Service) CreateCustomer(customer *types.CreateCustomerPayload) (int, error) {
-	logger.Info("Validating customers")
-	if err := utils.Validate.Struct(customer); err != nil {
+func (s *Service) CreateUser(user *types.CreateUserPayload) (int, error) {
+	logger.Info("Validating users")
+	if err := utils.Validate.Struct(user); err != nil {
 		if validationErrors, ok := err.(validator.ValidationErrors); ok {
 			errorMessages := utils.TranslateValidationErrors(validationErrors)
 
@@ -55,7 +55,7 @@ func (s *Service) CreateCustomer(customer *types.CreateCustomerPayload) (int, er
 
 	ctx := context.Background()
 
-	emailAlreadyExists, err := s.db.FindCustomerByEmail(ctx, customer.Email)
+	emailAlreadyExists, err := s.db.FindUserByEmail(ctx, user.Email)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			logger.Warn(err.Error())
@@ -67,18 +67,17 @@ func (s *Service) CreateCustomer(customer *types.CreateCustomerPayload) (int, er
 		return http.StatusConflict, fmt.Errorf("email already has been used")
 	}
 
-	logger.Info("inserting customers")
-	hashedPassword, err := auth.HashPassword(customer.Password)
+	logger.Info("inserting users")
+	hashedPassword, err := auth.HashPassword(user.Password)
 	if err != nil {
 		logger.Warn(err.Error())
 		return http.StatusInternalServerError, fmt.Errorf("Internal error")
 	}
-	_, err = s.db.InsertCustomers(ctx,
-		repository.InsertCustomersParams{
-			Name:     customer.Name,
-			Email:    customer.Email,
+	_, err = s.db.InsertUsers(ctx,
+		repository.InsertUsersParams{
+			Name:     user.Name,
+			Email:    user.Email,
 			Password: hashedPassword,
-			Role:     repository.UserRole(customer.Role),
 		})
 
 	if err != nil {
@@ -88,27 +87,27 @@ func (s *Service) CreateCustomer(customer *types.CreateCustomerPayload) (int, er
 	return http.StatusCreated, nil
 }
 
-func (s *Service) Login(customer *types.LoginCustomerPayload) (string, int, error) {
-	logger.Info("Service.Login", "Searching customer by email")
-	u, err := s.db.FindCustomerByEmail(context.Background(), customer.Email)
+func (s *Service) Login(user *types.LoginUserPayload) (string, int, error) {
+	logger.Info("Service.Login", "Searching user by email")
+	u, err := s.db.FindUserByEmail(context.Background(), user.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			logger.LogError("Service.Login", fmt.Errorf("customer not found: %s", customer.Email))
-			return "", http.StatusNotFound, fmt.Errorf("customer not found")
+			logger.LogError("Service.Login", fmt.Errorf("user not found: %s", user.Email))
+			return "", http.StatusNotFound, fmt.Errorf("user not found")
 		}
-		logger.LogError("Service.Login", fmt.Errorf("error finding customer: %w", err))
-		return "", http.StatusInternalServerError, fmt.Errorf("error finding customer: %w", err)
+		logger.LogError("Service.Login", fmt.Errorf("error finding user: %w", err))
+		return "", http.StatusInternalServerError, fmt.Errorf("error finding user: %w", err)
 	}
 
-	logger.Info("Service.Login", "Customer found, verifying password")
-	if !auth.ComparePasswords(u.Password, []byte(customer.Password)) {
-		logger.LogError("Service.Login", fmt.Errorf("invalid password for customer: %s", customer.Email))
+	logger.Info("Service.Login", "User found, verifying password")
+	if !auth.ComparePasswords(u.Password, []byte(user.Password)) {
+		logger.LogError("Service.Login", fmt.Errorf("invalid password for user: %s", user.Email))
 		return "", http.StatusUnauthorized, fmt.Errorf("invalid password")
 	}
 
 	logger.Info("Service.Login", "Password verified, generating token")
 	secret := []byte(configs.Envs.JWT.JWTSecret)
-	token, err := auth.CreateJWT(secret, u.ID, string(u.Role))
+	token, err := auth.CreateJWT(secret, u.ID)
 	if err != nil {
 		logger.LogError("Service.Login", fmt.Errorf("error creating token: %w", err))
 		return "", http.StatusInternalServerError, fmt.Errorf("error creating token: %w", err)

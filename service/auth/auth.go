@@ -19,7 +19,7 @@ const UserKey contextKey = "userID"
 
 var logger = utils.NewParentLogger("AUTH")
 
-func WithJWTAuth(handleFunc http.HandlerFunc, store repository.Queries, requiredRole string) http.HandlerFunc {
+func WithJWTAuth(handleFunc http.HandlerFunc, store repository.Queries) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("VALIDATE JWT")
 		tokenString := getTokenFromRequest(r)
@@ -53,27 +53,7 @@ func WithJWTAuth(handleFunc http.HandlerFunc, store repository.Queries, required
 			return
 		}
 
-		roleValue, ok := claims["role"]
-		if !ok {
-			logger.Info("role not found in claims")
-			permissionDenied(w)
-			return
-		}
-
-		role, ok := roleValue.(string)
-		if !ok {
-			logger.Info("role is not a string")
-			permissionDenied(w)
-			return
-		}
-
-		if role != requiredRole {
-			logger.Info("user does not have the required role: %v", requiredRole)
-			permissionDenied(w)
-			return
-		}
-
-		u, err := store.FindCustomerByID(context.Background(), int32(userID)) // Converta para int32
+		u, err := store.FindUserByID(context.Background(), int32(userID)) // Converta para int32
 		if err != nil {
 			logger.Info("error fetching user: %v", err.Error())
 			permissionDenied(w)
@@ -102,11 +82,10 @@ func getTokenFromRequest(r *http.Request) string {
 	return ""
 }
 
-func CreateJWT(secret []byte, userID int32, role string) (string, error) {
+func CreateJWT(secret []byte, userID int32) (string, error) {
 	expiration := time.Second * time.Duration(configs.Envs.JWT.JWTExpirationInSeconds)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userID":  userID,
-		"role":    role,
 		"expires": time.Now().Add(expiration).Unix(),
 	})
 	tokenString, err := token.SignedString(secret)

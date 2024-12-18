@@ -36,11 +36,11 @@ func (s *APIServer) Run() error {
 	// if the api changes in the future we can just change the version here, and the old version will still be available
 	subrouter := router.PathPrefix("/api/v1").Subrouter()
 	costumersService := users.NewService(s.db, s.dbTx)
-	customersHandler := users.NewHandler(costumersService)
-	customersHandler.RegisterRoutes(subrouter.PathPrefix("/customers").Subrouter())
+	usersHandler := users.NewHandler(costumersService)
+	usersHandler.RegisterRoutes(subrouter.PathPrefix("/users").Subrouter())
 
 	ankiService := anki.NewService(s.db, s.dbTx, s.openAiClient)
-	ankiHandler := anki.NewHandler(ankiService)
+	ankiHandler := anki.NewHandler(ankiService, *s.db)
 	ankiHandler.RegisterRoutes(subrouter.PathPrefix("/anki").Subrouter())
 
 	log.Println("Starting server on", s.addr)

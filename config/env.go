@@ -62,7 +62,7 @@ func initConfig() Config {
 			Database: int(getEnvAsInt("REDIS_DATABASE", 0)),
 		},
 		Postgres: Postgres{
-			URL: getEnv("POSTGRES_URL", "postgresql://docker:docker@pg:5432/ecommerce"),
+			URL: getEnv("POSTGRES_URL", "postgresql://docker:docker@pg:5432/anki"),
 		},
 		OpenAi: OpenAi{
 			API_KEY: getEnv("OPENAI_API_KEY", "MY_SECRET_API_KEY"),

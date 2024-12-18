@@ -14,18 +14,17 @@ type ValidationErrorResponse struct {
 }
 
 type CostumersService interface {
-	CreateCustomer(c *CreateCustomerPayload) (int, error)
-	Login(c *LoginCustomerPayload) (string, int, error)
+	CreateUser(c *CreateUserPayload) (int, error)
+	Login(c *LoginUserPayload) (string, int, error)
 }
 
-type CreateCustomerPayload struct {
+type CreateUserPayload struct {
 	Name     string `json:"name" validate:"required"`
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=3,max=100"`
-	Role     string `json:"role" validate:"required,oneof=user admin"`
 }
 
-type LoginCustomerPayload struct {
+type LoginUserPayload struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=3,max=100"`
 }

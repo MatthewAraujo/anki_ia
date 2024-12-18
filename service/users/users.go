@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var logger = utils.NewParentLogger("Rota api/v1/customer")
+var logger = utils.NewParentLogger("Rota api/v1/user")
 
 type Handler struct {
 	Service types.CostumersService
@@ -23,14 +23,14 @@ func NewHandler(Service types.CostumersService) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/register", h.CreateCustomer).Methods(http.MethodPost)
+	router.HandleFunc("/register", h.CreateUser).Methods(http.MethodPost)
 	router.HandleFunc("/login", h.Login).Methods(http.MethodPost)
 }
 
-func (h *Handler) CreateCustomer(w http.ResponseWriter, r *http.Request) {
-	logger.Info(r.URL.Path, "Creating customer")
+func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	logger.Info(r.URL.Path, "Creating user")
 
-	var payload types.CreateCustomerPayload
+	var payload types.CreateUserPayload
 
 	logger.Info("Parsing JSON")
 	if err := utils.ParseJSON(r, &payload); err != nil {
@@ -39,7 +39,7 @@ func (h *Handler) CreateCustomer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status, err := h.Service.CreateCustomer(&payload)
+	status, err := h.Service.CreateUser(&payload)
 	if err != nil {
 		logger.LogError(r.URL.Path, err)
 		utils.WriteError(w, status, err)
@@ -51,7 +51,7 @@ func (h *Handler) CreateCustomer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	var payload types.LoginCustomerPayload
+	var payload types.LoginUserPayload
 
 	logger.Info(r.URL.Path, "Starting login process")
 

@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS questions (
+  id SERIAL PRIMARY KEY,
+  pdf_id INT NOT NULL,
+  question_text TEXT NOT NULL,
+  FOREIGN KEY (pdf_id) REFERENCES pdfs(id) ON DELETE CASCADE
+);
