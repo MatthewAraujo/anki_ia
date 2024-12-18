@@ -33,6 +33,13 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 func (h *Handler) CreateAnki(w http.ResponseWriter, r *http.Request) {
 	logger.Info(r.URL.Path, "Creating anki")
 
+	// Obtém o userID do contexto
+	userID := auth.GetUserIDFromContext(r.Context())
+	if userID == 0 {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
+		return
+	}
+
 	_, err := utils.ParseMultipartForm(r)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
@@ -47,8 +54,9 @@ func (h *Handler) CreateAnki(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	payload := types.CreateAnkiPayload{
-		File: file,
-		Name: name,
+		File:   file,
+		Name:   name,
+		UserID: userID,
 	}
 
 	questions, status, err := h.Service.CreateAnki(&payload)

@@ -2,8 +2,6 @@ package types
 
 import (
 	"mime/multipart"
-
-	"github.com/google/uuid"
 )
 
 type ValidationErrorResponse struct {
@@ -34,8 +32,9 @@ type AnkiService interface {
 }
 
 type CreateAnkiPayload struct {
-	File multipart.File
-	Name string
+	File   multipart.File `json:"file"`
+	Name   string
+	UserID int32
 }
 
 type CreateAnkiResponse struct {
@@ -43,8 +42,7 @@ type CreateAnkiResponse struct {
 }
 
 type Question struct {
-	ID           uuid.UUID         `json:"id"`
-	Pergunta     string            `json:"pergunta"`
-	Alternativas map[string]string `json:"alternativas"`
-	Gabarito     string            `json:"gabarito"`
+	Question     string            `json:"question"`
+	Alternatives map[string]string `json:"alternatives"`
+	Right_answer string            `json:"right_answer"`
 }

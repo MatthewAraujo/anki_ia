@@ -11,35 +11,35 @@ import (
 )
 
 const createPdf = `-- name: CreatePdf :one
-INSERT INTO pdfs (user_id, filename, status, text_content)
-VALUES ($1, $2, $3, $4)
-RETURNING id
+INSERT INTO pdfs (user_id, filename, text_content)
+VALUES ($1, $2, $3)
+RETURNING id, user_id, filename, uploaded_at, status, text_content
 `
 
 type CreatePdfParams struct {
 	UserID      int32          `json:"user_id"`
 	Filename    string         `json:"filename"`
-	Status      sql.NullString `json:"status"`
 	TextContent sql.NullString `json:"text_content"`
 }
 
-func (q *Queries) CreatePdf(ctx context.Context, arg CreatePdfParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, createPdf,
-		arg.UserID,
-		arg.Filename,
-		arg.Status,
-		arg.TextContent,
+func (q *Queries) CreatePdf(ctx context.Context, arg CreatePdfParams) (Pdf, error) {
+	row := q.db.QueryRowContext(ctx, createPdf, arg.UserID, arg.Filename, arg.TextContent)
+	var i Pdf
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Filename,
+		&i.UploadedAt,
+		&i.Status,
+		&i.TextContent,
 	)
-	var id int32
-	err := row.Scan(&id)
-	return id, err
+	return i, err
 }
 
-const updateStatus = `-- name: UpdateStatus :one
+const updateStatus = `-- name: UpdateStatus :exec
 UPDATE pdfs
 SET status = $1
-WHERE id = $2 
-RETURNING id
+WHERE id = $2
 `
 
 type UpdateStatusParams struct {
@@ -47,9 +47,25 @@ type UpdateStatusParams struct {
 	ID     int32          `json:"id"`
 }
 
-func (q *Queries) UpdateStatus(ctx context.Context, arg UpdateStatusParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, updateStatus, arg.Status, arg.ID)
-	var id int32
-	err := row.Scan(&id)
-	return id, err
+func (q *Queries) UpdateStatus(ctx context.Context, arg UpdateStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateStatus, arg.Status, arg.ID)
+	return err
+}
+
+const updateStatusAndText = `-- name: UpdateStatusAndText :exec
+UPDATE pdfs
+SET text_content = $1,
+    status =$2
+WHERE id = $3
+`
+
+type UpdateStatusAndTextParams struct {
+	TextContent sql.NullString `json:"text_content"`
+	Status      sql.NullString `json:"status"`
+	ID          int32          `json:"id"`
+}
+
+func (q *Queries) UpdateStatusAndText(ctx context.Context, arg UpdateStatusAndTextParams) error {
+	_, err := q.db.ExecContext(ctx, updateStatusAndText, arg.TextContent, arg.Status, arg.ID)
+	return err
 }

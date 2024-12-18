@@ -108,3 +108,12 @@ func validateJWT(tokenString string) (*jwt.Token, error) {
 func permissionDenied(w http.ResponseWriter) {
 	utils.WriteError(w, http.StatusForbidden, fmt.Errorf("permission denied"))
 }
+
+func GetUserIDFromContext(ctx context.Context) int32 {
+	userID, ok := ctx.Value(UserKey).(int32)
+	if !ok {
+		return 0
+	}
+
+	return userID
+}
