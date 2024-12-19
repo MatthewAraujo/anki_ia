@@ -70,3 +70,11 @@ func TranslateValidationErrors(errs validator.ValidationErrors) []types.Validati
 	}
 	return errors
 }
+func ParseQuestionsFromOpenAi(answer string) ([]types.Question, error) {
+	var questions []types.Question
+	err := json.Unmarshal([]byte(answer), &questions)
+	if err != nil {
+		return nil, err
+	}
+	return questions, nil
+}
