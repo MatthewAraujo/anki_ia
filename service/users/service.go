@@ -93,7 +93,7 @@ func (s *Service) Login(user *types.LoginUserPayload) (string, int, error) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			logger.LogError("Service.Login", fmt.Errorf("user not found: %s", user.Email))
-			return "", http.StatusNotFound, fmt.Errorf("user not found")
+			return "", http.StatusUnauthorized, fmt.Errorf("user not found")
 		}
 		logger.LogError("Service.Login", fmt.Errorf("error finding user: %w", err))
 		return "", http.StatusInternalServerError, fmt.Errorf("error finding user: %w", err)
