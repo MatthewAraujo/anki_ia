@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/openai/openai-go"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/cors"
 )
 
 type APIServer struct {
@@ -33,6 +34,14 @@ func NewAPIServer(addr string, db *repository.Queries, dbTx *sql.DB, redis *redi
 
 func (s *APIServer) Run() error {
 	router := mux.NewRouter()
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+	})
+
+	router.Use(c.Handler)
 	// if the api changes in the future we can just change the version here, and the old version will still be available
 	subrouter := router.PathPrefix("/api/v1").Subrouter()
 	costumersService := users.NewService(s.db, s.dbTx)
