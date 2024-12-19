@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 
 	"github.com/MatthewAraujo/anki_ia/repository"
 	"github.com/MatthewAraujo/anki_ia/service/auth"
@@ -28,6 +29,34 @@ func NewHandler(Service types.AnkiService, store repository.Queries) *Handler {
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/", auth.WithJWTAuth(h.CreateAnki, h.store)).Methods(http.MethodPost)
+	router.HandleFunc("/{id}", auth.WithJWTAuth(h.GetAnkiById, h.store)).Methods(http.MethodGet)
+}
+
+func (h *Handler) GetAnkiById(w http.ResponseWriter, r *http.Request) {
+	logger.Info(r.URL.Path, "Get Anki By ID")
+	ankiId := mux.Vars(r)["id"]
+
+	id, err := strconv.Atoi(ankiId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("error parsing id"))
+		return
+	}
+
+	var payload types.GetAnkiByIdPayload
+
+	payload = types.GetAnkiByIdPayload{
+		Id: int32(id),
+	}
+
+	questions, status, err := h.Service.GetAnkiById(&payload)
+	if err != nil {
+		logger.LogError(r.URL.Path, err)
+		utils.WriteError(w, status, err)
+		return
+	}
+
+	utils.WriteJSON(w, status, questions)
+
 }
 
 func (h *Handler) CreateAnki(w http.ResponseWriter, r *http.Request) {

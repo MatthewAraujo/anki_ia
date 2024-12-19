@@ -13,3 +13,8 @@ UPDATE pdfs
 SET text_content = $1,
     status =$2
 WHERE id = $3;
+
+-- name: GetPdfById :one
+SELECT id, user_id, filename, uploaded_at, status, text_content
+FROM pdfs
+WHERE id = $1;

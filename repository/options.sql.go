@@ -9,6 +9,41 @@ import (
 	"context"
 )
 
+const getOptionsByQuestionId = `-- name: GetOptionsByQuestionId :many
+SELECT id, question_id, option_key, option_text, is_correct
+FROM options
+WHERE question_id = $1
+`
+
+func (q *Queries) GetOptionsByQuestionId(ctx context.Context, questionID int32) ([]Option, error) {
+	rows, err := q.db.QueryContext(ctx, getOptionsByQuestionId, questionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Option
+	for rows.Next() {
+		var i Option
+		if err := rows.Scan(
+			&i.ID,
+			&i.QuestionID,
+			&i.OptionKey,
+			&i.OptionText,
+			&i.IsCorrect,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertOption = `-- name: InsertOption :exec
 INSERT INTO options (question_id, option_key, option_text, is_correct)
 VALUES ($1, $2, $3, $4)

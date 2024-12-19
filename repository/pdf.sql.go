@@ -36,6 +36,26 @@ func (q *Queries) CreatePdf(ctx context.Context, arg CreatePdfParams) (Pdf, erro
 	return i, err
 }
 
+const getPdfById = `-- name: GetPdfById :one
+SELECT id, user_id, filename, uploaded_at, status, text_content
+FROM pdfs
+WHERE id = $1
+`
+
+func (q *Queries) GetPdfById(ctx context.Context, id int32) (Pdf, error) {
+	row := q.db.QueryRowContext(ctx, getPdfById, id)
+	var i Pdf
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Filename,
+		&i.UploadedAt,
+		&i.Status,
+		&i.TextContent,
+	)
+	return i, err
+}
+
 const updateStatus = `-- name: UpdateStatus :exec
 UPDATE pdfs
 SET status = $1

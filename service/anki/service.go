@@ -140,6 +140,47 @@ func (s *Service) CreateAnki(payload *types.CreateAnkiPayload) (types.CreateAnki
 	}, http.StatusCreated, nil
 }
 
+func (s *Service) GetAnkiById(payload *types.GetAnkiByIdPayload) (types.GetAnkiByIdResponse, int, error) {
+	var response types.GetAnkiByIdResponse
+
+	_, err := s.db.GetPdfById(context.Background(), payload.Id)
+	if err != nil {
+		return response, http.StatusInternalServerError, fmt.Errorf("error fetching PDF: %w", err)
+	}
+
+	questions, err := s.db.GetQuestionsByPdfId(context.Background(), payload.Id)
+	if err != nil {
+		return response, http.StatusInternalServerError, fmt.Errorf("error fetching questions: %w", err)
+	}
+
+	var anki types.Anki
+
+	for _, question := range questions {
+		options, err := s.db.GetOptionsByQuestionId(context.Background(), question.ID)
+		if err != nil {
+			return response, http.StatusInternalServerError, fmt.Errorf("error fetching options for question %d: %w", question.ID, err)
+		}
+
+		alternatives := make(map[string]string)
+		var rightAnswer string
+		for _, option := range options {
+			alternatives[option.OptionKey] = option.OptionText
+			if option.IsCorrect {
+				rightAnswer = option.OptionKey
+			}
+		}
+
+		anki.Question = append(anki.Question, types.Question{
+			Question:     question.QuestionText,
+			Alternatives: alternatives,
+			Right_answer: rightAnswer,
+		})
+	}
+
+	response.Anki = anki
+	return response, http.StatusOK, nil
+}
+
 func extractTextFromPDF(file *os.File) (string, error) {
 	size, err := file.Stat()
 	reader, err := pdf.NewReader(file, size.Size())

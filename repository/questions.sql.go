@@ -26,3 +26,32 @@ func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) 
 	err := row.Scan(&id)
 	return id, err
 }
+
+const getQuestionsByPdfId = `-- name: GetQuestionsByPdfId :many
+SELECT id, pdf_id, question_text
+FROM questions
+WHERE pdf_id = $1
+`
+
+func (q *Queries) GetQuestionsByPdfId(ctx context.Context, pdfID int32) ([]Question, error) {
+	rows, err := q.db.QueryContext(ctx, getQuestionsByPdfId, pdfID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Question
+	for rows.Next() {
+		var i Question
+		if err := rows.Scan(&i.ID, &i.PdfID, &i.QuestionText); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
