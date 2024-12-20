@@ -2,7 +2,7 @@
 MIGRATION_DIR=cmd/migrate/migrations
 
 build:
-	@go build -o bin/ecom cmd/main.go
+	@go build -o bin/flash cmd/main.go
 
 test:
 	@echo "Testing..."

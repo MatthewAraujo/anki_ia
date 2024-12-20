@@ -9,6 +9,7 @@
 *.dylib
 bin/
 bin/*
+bin/flash
 
 # Test binary, built with `go test -c`
 *.test
