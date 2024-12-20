@@ -55,6 +55,7 @@ type CreateAnkiResponse struct {
 }
 
 type Question struct {
+	ID           int32             `json:"id"`
 	Question     string            `json:"question"`
 	Alternatives map[string]string `json:"alternatives"`
 	Right_answer string            `json:"right_answer"`

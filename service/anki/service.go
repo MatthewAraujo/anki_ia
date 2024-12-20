@@ -64,7 +64,6 @@ func (s *Service) CreateAnki(payload *types.CreateAnkiPayload) (types.CreateAnki
 		Filename:    payload.Name,
 		TextContent: utils.ToNullString(""),
 	})
-	fmt.Printf("pdf: %v\n", pdf)
 
 	tempFile, err := os.CreateTemp("", "uploaded_*.pdf")
 	if err != nil {
@@ -135,8 +134,39 @@ func (s *Service) CreateAnki(payload *types.CreateAnkiPayload) (types.CreateAnki
 		return types.CreateAnkiResponse{}, http.StatusInternalServerError, fmt.Errorf("error adding questions and options to db %w", err)
 	}
 
+	questionsPDF, err := txQueries.GetQuestionsByPdfId(ctx, pdf.ID)
+	if err != nil {
+		return types.CreateAnkiResponse{}, http.StatusInternalServerError, fmt.Errorf("error fetching questions: %w", err)
+	}
+
+	var anki types.Anki
+
+	for _, question := range questionsPDF {
+		logger.Info("Criando resposta para o usuário")
+		options, err := txQueries.GetOptionsByQuestionId(ctx, question.ID)
+		if err != nil {
+			return types.CreateAnkiResponse{}, http.StatusInternalServerError, fmt.Errorf("error fetching options for question %d: %w", question.ID, err)
+		}
+
+		alternatives := make(map[string]string)
+		var rightAnswer string
+		for _, option := range options {
+			alternatives[option.OptionKey] = option.OptionText
+			if option.IsCorrect {
+				rightAnswer = option.OptionKey
+			}
+		}
+
+		anki.Question = append(anki.Question, types.Question{
+			ID:           question.ID,
+			Question:     question.QuestionText,
+			Alternatives: alternatives,
+			Right_answer: rightAnswer,
+		})
+	}
+
 	return types.CreateAnkiResponse{
-		Question: questions,
+		Question: anki.Question,
 	}, http.StatusCreated, nil
 }
 
@@ -171,6 +201,7 @@ func (s *Service) GetAnkiById(payload *types.GetAnkiByIdPayload) (types.GetAnkiB
 		}
 
 		anki.Question = append(anki.Question, types.Question{
+			ID:           question.ID,
 			Question:     question.QuestionText,
 			Alternatives: alternatives,
 			Right_answer: rightAnswer,
