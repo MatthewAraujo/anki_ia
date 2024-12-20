@@ -51,10 +51,11 @@ type CreateAnkiPayload struct {
 }
 
 type CreateAnkiResponse struct {
-	Question []Question `json:"questions"`
+	AnkiID int32 `json:"anki_id"`
 }
 
 type Question struct {
+	ID           int32             `json:"id"`
 	Question     string            `json:"question"`
 	Alternatives map[string]string `json:"alternatives"`
 	Right_answer string            `json:"right_answer"`
