@@ -142,7 +142,6 @@ func (s *Service) CreateAnki(payload *types.CreateAnkiPayload) (types.CreateAnki
 	var anki types.Anki
 
 	for _, question := range questionsPDF {
-		logger.Info("Criando resposta para o usuário")
 		options, err := txQueries.GetOptionsByQuestionId(ctx, question.ID)
 		if err != nil {
 			return types.CreateAnkiResponse{}, http.StatusInternalServerError, fmt.Errorf("error fetching options for question %d: %w", question.ID, err)
@@ -166,7 +165,7 @@ func (s *Service) CreateAnki(payload *types.CreateAnkiPayload) (types.CreateAnki
 	}
 
 	return types.CreateAnkiResponse{
-		Question: anki.Question,
+		AnkiID: pdf.ID,
 	}, http.StatusCreated, nil
 }
 
@@ -208,8 +207,9 @@ func (s *Service) GetAnkiById(payload *types.GetAnkiByIdPayload) (types.GetAnkiB
 		})
 	}
 
-	response.Anki = anki
-	return response, http.StatusOK, nil
+	return types.GetAnkiByIdResponse{
+		Anki: anki,
+	}, http.StatusOK, nil
 }
 
 func extractTextFromPDF(file *os.File) (string, error) {

@@ -51,7 +51,7 @@ type CreateAnkiPayload struct {
 }
 
 type CreateAnkiResponse struct {
-	Question []Question `json:"questions"`
+	AnkiID int32 `json:"anki_id"`
 }
 
 type Question struct {
