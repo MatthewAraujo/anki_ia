@@ -56,6 +56,43 @@ func (q *Queries) GetPdfById(ctx context.Context, id int32) (Pdf, error) {
 	return i, err
 }
 
+const getPdfsByUserId = `-- name: GetPdfsByUserId :many
+SELECT id, user_id, filename, uploaded_at, status, text_content
+FROM pdfs
+WHERE user_id = $1
+ORDER BY uploaded_at DESC
+`
+
+func (q *Queries) GetPdfsByUserId(ctx context.Context, userID int32) ([]Pdf, error) {
+	rows, err := q.db.QueryContext(ctx, getPdfsByUserId, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Pdf
+	for rows.Next() {
+		var i Pdf
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Filename,
+			&i.UploadedAt,
+			&i.Status,
+			&i.TextContent,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateStatus = `-- name: UpdateStatus :exec
 UPDATE pdfs
 SET status = $1

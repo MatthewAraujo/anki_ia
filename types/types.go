@@ -30,6 +30,15 @@ type LoginUserPayload struct {
 type AnkiService interface {
 	CreateAnki(a *CreateAnkiPayload) (CreateAnkiResponse, int, error)
 	GetAnkiById(a *GetAnkiByIdPayload) (GetAnkiByIdResponse, int, error)
+	GetAnkisByUserID(a *GetAnkisByUserIDPayload) (GetAnkisByUserIDResponse, int, error)
+}
+
+type GetAnkisByUserIDPayload struct {
+	UserID int32
+}
+
+type GetAnkisByUserIDResponse struct {
+	Ankis []Anki `json:"ankis"`
 }
 
 type GetAnkiByIdPayload struct {
