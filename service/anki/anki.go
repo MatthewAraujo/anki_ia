@@ -34,7 +34,7 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 }
 
 func (h *Handler) GetAnkisByUser(w http.ResponseWriter, r *http.Request) {
-	logger.Info(r.URL.Path, "Get Anki By User")
+	logger.Info(r.URL.Path, "Get Ankis  By User")
 	userID := auth.GetUserIDFromContext(r.Context())
 	if userID == 0 {
 		logger.LogError(r.URL.Path, fmt.Errorf("user not authenticated"))

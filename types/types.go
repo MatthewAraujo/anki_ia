@@ -38,7 +38,12 @@ type GetAnkisByUserIDPayload struct {
 }
 
 type GetAnkisByUserIDResponse struct {
-	Ankis []Anki `json:"ankis"`
+	Ankis []AnkiMinimun `json:"ankis"`
+}
+
+type AnkiMinimun struct {
+	ID       int32  `json:"id"`
+	Question string `json:"question"`
 }
 
 type GetAnkiByIdPayload struct {

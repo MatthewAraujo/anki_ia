@@ -177,7 +177,7 @@ func (s *Service) GetAnkisByUserID(payload *types.GetAnkisByUserIDPayload) (type
 		return response, http.StatusInternalServerError, fmt.Errorf("error fetching PDFs: %w", err)
 	}
 
-	var ankis []types.Anki
+	var ankis []types.AnkiMinimun
 
 	for _, pdf := range pdfs {
 		questions, err := s.db.GetQuestionsByPdfId(context.Background(), pdf.ID)
@@ -185,32 +185,10 @@ func (s *Service) GetAnkisByUserID(payload *types.GetAnkisByUserIDPayload) (type
 			return response, http.StatusInternalServerError, fmt.Errorf("error fetching questions: %w", err)
 		}
 
-		var anki types.Anki
-
-		for _, question := range questions {
-			options, err := s.db.GetOptionsByQuestionId(context.Background(), question.ID)
-			if err != nil {
-				return response, http.StatusInternalServerError, fmt.Errorf("error fetching options for question %d: %w", question.ID, err)
-			}
-
-			alternatives := make(map[string]string)
-			var rightAnswer string
-			for _, option := range options {
-				alternatives[option.OptionKey] = option.OptionText
-				if option.IsCorrect {
-					rightAnswer = option.OptionKey
-				}
-			}
-
-			anki.Question = append(anki.Question, types.Question{
-				ID:           question.ID,
-				Question:     question.QuestionText,
-				Alternatives: alternatives,
-				Right_answer: rightAnswer,
-			})
-		}
-
-		ankis = append(ankis, anki)
+		ankis = append(ankis, types.AnkiMinimun{
+			ID:       pdf.ID,
+			Question: questions[0].QuestionText,
+		})
 	}
 
 	return types.GetAnkisByUserIDResponse{
