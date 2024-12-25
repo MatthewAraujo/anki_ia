@@ -6,3 +6,4 @@ analisar os gastos para saber quanto ira custar para cada usuario
 
 
 maybe i will need to use some similarity code to see with the questions is similar
+for bigger files using something like pinecode to vetorize and create embbedings
