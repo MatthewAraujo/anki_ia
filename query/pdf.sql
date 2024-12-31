@@ -18,3 +18,9 @@ WHERE id = $3;
 SELECT id, user_id, filename, uploaded_at, status, text_content
 FROM pdfs
 WHERE id = $1;
+
+-- name: GetPdfsByUserId :many
+SELECT id, user_id, filename, uploaded_at, status, text_content
+FROM pdfs
+WHERE user_id = $1
+ORDER BY uploaded_at DESC;

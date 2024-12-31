@@ -169,6 +169,33 @@ func (s *Service) CreateAnki(payload *types.CreateAnkiPayload) (types.CreateAnki
 	}, http.StatusCreated, nil
 }
 
+func (s *Service) GetAnkisByUserID(payload *types.GetAnkisByUserIDPayload) (types.GetAnkisByUserIDResponse, int, error) {
+	var response types.GetAnkisByUserIDResponse
+
+	pdfs, err := s.db.GetPdfsByUserId(context.Background(), payload.UserID)
+	if err != nil {
+		return response, http.StatusInternalServerError, fmt.Errorf("error fetching PDFs: %w", err)
+	}
+
+	var ankis []types.AnkiMinimun
+
+	for _, pdf := range pdfs {
+		questions, err := s.db.GetQuestionsByPdfId(context.Background(), pdf.ID)
+		if err != nil {
+			return response, http.StatusInternalServerError, fmt.Errorf("error fetching questions: %w", err)
+		}
+
+		ankis = append(ankis, types.AnkiMinimun{
+			ID:       pdf.ID,
+			Question: questions[0].QuestionText,
+		})
+	}
+
+	return types.GetAnkisByUserIDResponse{
+		Ankis: ankis,
+	}, http.StatusOK, nil
+}
+
 func (s *Service) GetAnkiById(payload *types.GetAnkiByIdPayload) (types.GetAnkiByIdResponse, int, error) {
 	var response types.GetAnkiByIdResponse
 

@@ -30,6 +30,41 @@ func NewHandler(Service types.AnkiService, store repository.Queries) *Handler {
 func (h *Handler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/", auth.WithJWTAuth(h.CreateAnki, h.store)).Methods(http.MethodPost)
 	router.HandleFunc("/{id}", auth.WithJWTAuth(h.GetAnkiById, h.store)).Methods(http.MethodGet)
+	router.HandleFunc("/{id}/user", auth.WithJWTAuth(h.GetAnkisByUser, h.store)).Methods(http.MethodGet)
+}
+
+func (h *Handler) GetAnkisByUser(w http.ResponseWriter, r *http.Request) {
+	logger.Info(r.URL.Path, "Get Ankis  By User")
+	userID := auth.GetUserIDFromContext(r.Context())
+	if userID == 0 {
+		logger.LogError(r.URL.Path, fmt.Errorf("user not authenticated"))
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
+		return
+	}
+
+	userId := mux.Vars(r)["id"]
+
+	id, err := strconv.Atoi(userId)
+	if err != nil {
+		logger.LogError(r.URL.Path, err)
+		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("error parsing id"))
+		return
+	}
+
+	var payload types.GetAnkisByUserIDPayload
+
+	payload = types.GetAnkisByUserIDPayload{
+		UserID: int32(id),
+	}
+
+	questions, status, err := h.Service.GetAnkisByUserID(&payload)
+	if err != nil {
+		logger.LogError(r.URL.Path, err)
+		utils.WriteError(w, status, err)
+		return
+	}
+
+	utils.WriteJSON(w, status, questions)
 }
 
 func (h *Handler) GetAnkiById(w http.ResponseWriter, r *http.Request) {
