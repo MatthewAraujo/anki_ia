@@ -53,7 +53,7 @@ func WithJWTAuth(handleFunc http.HandlerFunc, store repository.Queries) http.Han
 			return
 		}
 
-		u, err := store.FindUserByID(context.Background(), int32(userID)) // Converta para int32
+		u, err := store.FindUserByID(context.Background(), int32(userID))
 		if err != nil {
 			logger.Info("error fetching user: %v", err.Error())
 			permissionDenied(w)
