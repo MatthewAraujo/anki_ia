@@ -10,7 +10,7 @@ test:
 	
 run: build
 	@echo "Building..."
-	@./bin/ecom
+	@./bin/flash
 
 migration:
 	@migrate create -ext sql -dir $(MIGRATION_DIR) $(NAME)
